@@ -10,13 +10,13 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="start"
-        android:id="@+id/start"/>
+        android:text="server"
+        android:id="@+id/server"/>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="stop"
-        android:id="@+id/stop"/>
+        android:text="client"
+        android:id="@+id/client"/>
 
 
 </LinearLayout>
