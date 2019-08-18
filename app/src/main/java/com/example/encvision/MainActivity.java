@@ -2,6 +2,7 @@ package com.example.encvision;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.View;
@@ -19,12 +20,14 @@ public class MainActivity extends Activity {
         server.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, enc_server.class));
 
             }
         });
         client.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, enc_client.class));
 
             }
         });
