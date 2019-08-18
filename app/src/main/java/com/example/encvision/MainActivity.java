@@ -54,7 +54,7 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MainActivity extends Activity implements View.OnClickListener {
+public class MainActivity extends Activity {
 
     private static final String TAG = "ScreenCaptureFragment";
 
@@ -92,8 +92,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
-        start.setOnClickListener(this);
-        stop.setOnClickListener(this);
+        start.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mVirtualDisplay == null) {
+                    startScreenCapture();
+                    Log.e("this","startscreencapture");
+                }
+            }
+        });
+        stop.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if (mVirtualDisplay != null)
+                    stopScreenCapture();
+
+            }
+        });
         startBroadcast();
 
 
@@ -183,24 +198,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.start:
-                if (mVirtualDisplay == null) {
-                    startScreenCapture();
-                    Log.e("this","startscreencapture");
-                }
-                break;
-
-            case R.id.stop:
-                if (mVirtualDisplay != null)
-                    stopScreenCapture();
-
-
-                break;
-        }
-    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
