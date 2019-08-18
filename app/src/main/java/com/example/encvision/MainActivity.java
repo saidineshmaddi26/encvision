@@ -58,14 +58,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = "ScreenCaptureFragment";
 
-    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
-    private static final String STATE_RESULT_CODE = "result_code";
-    private static final String STATE_RESULT_DATA = "result_data";
-
     private static final int REQUEST_MEDIA_PROJECTION = 1;
 
     private int mResultCode;
@@ -96,18 +88,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (savedInstanceState != null) {
-            mResultCode = savedInstanceState.getInt(STATE_RESULT_CODE);
-            mResultData = savedInstanceState.getParcelable(STATE_RESULT_DATA);
-        }
         mMediaProjectionManager = (MediaProjectionManager)
                 getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
         start.setOnClickListener(this);
         stop.setOnClickListener(this);
-
         startBroadcast();
 
 
@@ -224,6 +210,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 return;
             }
 
+
             Log.i(TAG, "Starting screen capture");
             mResultCode = resultCode;
             mResultData = data;
@@ -238,20 +225,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         WindowManager wm = (WindowManager) this.getSystemService(WINDOW_SERVICE);
         wm.getDefaultDisplay().getRealMetrics(displayMetrics);
         mScreenDensity = displayMetrics.densityDpi;
-        if (mSurface == null) {
-            return;
-        }
-        if (mMediaProjection != null) {
-            setUpVirtualDisplay();
-        } else if (mResultCode != 0 && mResultData != null) {
-            setUpMediaProjection();
-            setUpVirtualDisplay();
-        } else {
+
             Log.i(TAG, "Requesting confirmation");
             startActivityForResult(
                     mMediaProjectionManager.createScreenCaptureIntent(),
                     REQUEST_MEDIA_PROJECTION);
-        }
     }
 
     private void setUpMediaProjection() {
