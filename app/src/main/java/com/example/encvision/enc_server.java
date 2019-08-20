@@ -3,15 +3,22 @@ package com.example.encvision;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.icu.text.SimpleDateFormat;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
@@ -21,11 +28,25 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 
+import net.majorkernelpanic.streaming.SessionBuilder;
+import net.majorkernelpanic.streaming.gl.SurfaceView;
+import net.majorkernelpanic.streaming.rtp.H264Packetizer;
+import net.majorkernelpanic.streaming.rtp.MediaCodecInputStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.Date;
 
 public class enc_server extends Activity {
 
@@ -57,20 +78,39 @@ public class enc_server extends Activity {
 
     private MediaCodec encoder;
 
+    SurfaceView mSurfaceview;
+
+    H264Packetizer packetizer;
+    MediaCodecInputStream mediaCodecInputStream;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.enc_server);
+        mSurfaceview=(SurfaceView)findViewById(R.id.surfaceview);
         mMediaProjectionManager = (MediaProjectionManager)
                 getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
+
+        packetizer=new H264Packetizer();
+
+
+
+
+
+
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (mVirtualDisplay == null) {
+
                     startScreenCapture();
                     Log.e("this","startscreencapture");
+
                 }
             }
         });
@@ -90,12 +130,6 @@ public class enc_server extends Activity {
     private void startBroadcast(){
 
         try {
-            sock = new DatagramSocket();
-            group=InetAddress.getByName("122.15.232.210");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
             encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);
             MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC,
                     streamWidth, streamHeight);
@@ -103,10 +137,20 @@ public class enc_server extends Activity {
             format.setInteger(MediaFormat.KEY_FRAME_RATE, 20);
             format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                     MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+            format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 0);
             format.setInteger(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 1000000);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                format.setInteger(MediaFormat.KEY_LATENCY, 0);
+            }
+            format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 5);
+            format.setInteger(MediaFormat.KEY_PRIORITY, 0x00);
             encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             mSurface = MediaCodec.createPersistentInputSurface();
             encoder.setInputSurface(mSurface);
+
+        //    mediaCodecInputStream=new MediaCodecInputStream(encoder);
+
+
             encoder.setCallback(new MediaCodec.Callback() {
                 @Override
                 public void onInputBufferAvailable(@NonNull MediaCodec codec, int index) {
@@ -124,13 +168,13 @@ public class enc_server extends Activity {
                     ByteBuffer buf;
 
                     if (outputBuffer != null) {
+
+
                         buf = ByteBuffer.allocate(outputBuffer.limit());
                         buf.put(outputBuffer);
                         buf.flip();
                         Log.e(TAG, "Wrote " + outputBuffer.limit() + " bytes.");
-
-                        BroadcastTask broadcastTask = new BroadcastTask(new DatagramPacket(buf.array(), outputBuffer.limit(), group, PORT_OUT));
-                        broadcastTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                        
                     }
                     else{
                         return;
@@ -152,10 +196,14 @@ public class enc_server extends Activity {
 
                     ByteBuffer sps = format.getByteBuffer("csd-0");
                     ByteBuffer pps = format.getByteBuffer("csd-1");
-                    BroadcastTask spsTask = new BroadcastTask(new DatagramPacket(sps.array(), sps.limit(), group, PORT_OUT));
-                    BroadcastTask ppsTask = new BroadcastTask(new DatagramPacket(pps.array(), pps.limit(), group, PORT_OUT));
-                    spsTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
-                    ppsTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
+
+
+                    packetizer.setStreamParameters(pps.array(),sps.array());
+
+//                    BroadcastTask spsTask = new BroadcastTask(new DatagramPacket(sps.array(), sps.limit(), group, PORT_OUT));
+//                    BroadcastTask ppsTask = new BroadcastTask(new DatagramPacket(pps.array(), pps.limit(), group, PORT_OUT));
+//                    spsTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
+//                    ppsTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
                     configSent = true;
                 }
             });
@@ -214,29 +262,6 @@ public class enc_server extends Activity {
         }
         mVirtualDisplay.release();
         mVirtualDisplay = null;
-    }
-
-    private class BroadcastTask extends AsyncTask<String, String, String> {
-        DatagramPacket packetOut;
-
-        BroadcastTask(DatagramPacket packet) {
-            packetOut = packet;
-        }
-
-        @Override
-        protected String doInBackground(String... strings) {
-            try {
-                sock.send(packetOut);
-                Log.e("this","sent packet successfully");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-        }
     }
 
 }

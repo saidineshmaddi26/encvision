@@ -9,8 +9,8 @@
         android:layout_height="wrap_content"
         android:text="start"
         android:id="@+id/start"/>
-    <TextureView
+    <net.majorkernelpanic.streaming.gl.SurfaceView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/video"/>
+        android:id="@+id/surfaceview"/>
 </LinearLayout>
