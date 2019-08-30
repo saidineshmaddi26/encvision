@@ -23,7 +23,7 @@
         <activity android:name=".enc_server"></activity>
         <activity android:name=".enc_client"></activity>
         <service android:name="net.majorkernelpanic.streaming.rtsp.RtspServer"/>
-
+<service android:name=".sender"></service>
     </application>
 
 </manifest>
