@@ -30,18 +30,40 @@ import java.nio.ByteBuffer;
 
 public class enc_client extends Activity {
 
+    MjpegView viewer;
+    String url="http://10.10.20.48:8080";
+    Button start,stop;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.enc_client);
-        MjpegView viewer = (MjpegView) findViewById(R.id.mjpegview);
-        viewer.setMode(MjpegView.MODE_FIT_WIDTH);
-        viewer.setAdjustHeight(true);
-        viewer.setUrl("http://25.132.44.59:8080");
-        viewer.startStream();
+        start=(Button)findViewById(R.id.start);
+        stop=(Button)findViewById(R.id.stop);
+        start.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                thread.start();
+            }
+        });
+
 
     }
+
+
+
+    Thread thread=new Thread(new Runnable() {
+        @Override
+        public void run() {
+            viewer = (MjpegView) findViewById(R.id.mjpegview);
+
+            viewer.setMode(MjpegView.MODE_FIT_WIDTH);
+            viewer.setAdjustHeight(true);
+            viewer.setUrl(url);
+            viewer.startStream();
+
+        }
+    });
 
 
 

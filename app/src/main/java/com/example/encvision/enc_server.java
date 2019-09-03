@@ -57,10 +57,6 @@ public class enc_server extends Activity {
     int flag=0;
 
 
-
-
-
-
     TextView text;
 
     ImageView imageView;
@@ -127,6 +123,7 @@ public class enc_server extends Activity {
     }
 
 
+
     public void send(byte[] buffer) {
         if (!mBound) return;
         // Create and send a message to the service, using a supported 'what' value
@@ -137,6 +134,10 @@ public class enc_server extends Activity {
             e.printStackTrace();
         }
     }
+
+
+
+
     public static final String TAG = MainActivity.class.getName();
     public static final int REQUEST_CODE = 100;
     public static int IMAGES_PRODUCED;
@@ -168,23 +169,12 @@ public class enc_server extends Activity {
                     int pixelStride = planes[0].getPixelStride();
                     int rowStride = planes[0].getRowStride();
                     int rowPadding = rowStride - pixelStride * mWidth;
-
-
-
-
-
                     if (bitmap != null) {
                         bitmap.recycle();
                     }
-                    bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
+                    int width1=mWidth + rowPadding / pixelStride;
+                    bitmap = Bitmap.createBitmap(width1, mHeight, Bitmap.Config.ARGB_8888);
                     bitmap.copyPixelsFromBuffer(buffer);
-
-
-
-
-
-
-
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 60, stream);
                     byte[] byteArray = stream.toByteArray();
@@ -204,8 +194,6 @@ public class enc_server extends Activity {
         }
     }
     public void takescreenshot() {
-
-
         mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
         startActivityForResult(mProjectionManager.createScreenCaptureIntent(), REQUEST_CODE);
@@ -219,8 +207,6 @@ public class enc_server extends Activity {
             }
         }.start();
     }
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE) {
@@ -310,8 +296,4 @@ public class enc_server extends Activity {
             }
         }
     }
-
-
-
-
 }

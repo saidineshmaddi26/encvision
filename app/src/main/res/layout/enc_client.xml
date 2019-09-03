@@ -9,8 +9,13 @@
         android:layout_height="wrap_content"
         android:text="start"
         android:id="@+id/start"/>
-    <com.longdo.mjpegviewer.MjpegView
-        android:id="@+id/mjpegview"
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/stop"
+        />
+    <com.longdo.mjpegviewer.MjpegView android:id="@+id/mjpegview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
 </LinearLayout>
